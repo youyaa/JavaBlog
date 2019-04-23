@@ -19,6 +19,8 @@ Hashcode：我觉得可以这样理解：并不是对象的内存地址，而是
 
 ## HashMap常见的面试题
 
+参考文章：https://juejin.im/post/5c1da988f265da6143130ccc
+
 - HashMap的工作原理
 
 HashMap基于hashing原理，我们通过put()和get()方法储存和获取对象。当我们将键值对传递给put()方法时，它调用键对象的hashCode()方法来计算hashcode，返回的hashCode用于找到bucket位置来储存Entry对象。如果该位置已经有元素了,调用equals方法判断是否相等,相等的话就进行替换值,不相等的话,放在链表里面.
