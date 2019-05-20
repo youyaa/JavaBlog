@@ -123,3 +123,4 @@ ConcurrentHashMap 的 get 方法是非常高效的，因为整个过程都不需
 
 其中抛弃了原有的 Segment 分段锁，而采用了 CAS + synchronized 来保证并发安全性。
 
+具体的分析可参考 https://crossoverjie.top/2018/07/23/java-senior/ConcurrentHashMap/

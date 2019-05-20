@@ -7,6 +7,7 @@ HashMap是基于hash算法的一种key-value键值对形式的非同步容器，
 ## HashMap的底层分析
 Hash算法是实现HashMap的关键算法。
 
+
 ### 三个非常关键的点
 
 equals：是否同一个对象实例。注意，是“实例”。比如String s = new String("test");  s.equals(s), 这就是同一个对象实例的比较；
@@ -41,7 +42,7 @@ HashMap基于hashing原理，我们通过put()和get()方法储存和获取对�
 
 面试者通常会回答，使用String或者Integer这样的类。这个时候可以继续追问为什么使用String、Integer呢？这些类有什么特点？如果面试者有很好的思考，可以回答出这些类是Immutable(不可变)的，并且这些类已经很规范的覆写了hashCode()以及equals()方法。作为不可变类天生是线程安全的，而且可以很好的优化比如可以缓存hash值，避免重复计算等等，那么基本上这道题算是过关了。
 
->重载hashCode()是为了对同一个key，能得到相同的Hash Code，这样HashMap就可以定位到我们指定的key上。
+>重载hashCode()是为了对同一个key，能得到相同的HashCode，这样HashMap就可以定位到我们指定的桶上。
 
 >重载equals()是为了向HashMap表明当前对象和key上所保存的对象是相等的，这样我们才真正地获得了这个key所对应的这个键值对。
 
