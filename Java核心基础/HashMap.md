@@ -60,9 +60,9 @@ HashMap，是一种根据关键码值（Key）去访问的value一种数据结�
 
 使用String或者Integer这样的类。这些类是Immutable(不可变)的，并且这些类已经很规范的覆写了hashCode()以及equals()方法。作为不可变类天生是线程安全的，而且可以很好的优化比如可以缓存hash值，避免重复计算等等。
 
->重载hashCode()是为了对同一个key，能得到相同的HashCode，这样HashMap就可以定位到我们指定的桶上。
-
->重载equals()是为了向HashMap表明当前对象和key上所保存的对象是相等的，这样我们才真正地获得了这个key所对应的这个键值对。
+>1. 重载hashCode()是为了对同一个key，能得到相同的HashCode，这样HashMap就可以定位到我们指定的桶上。
+>
+>2. 重载equals()是为了向HashMap表明当前对象和key上所保存的对象是相等的，这样我们才真正地获得了这个key所对应的这个键值对。
 
 - 为什么HashMap中bucket的大小为什么是2的幂？
 
