@@ -25,11 +25,17 @@ JAVA中定义的线程状态：
 ```java
 public enum State {
         NEW,
-        RUNNABLE,         //可运行。可能正在运行，也可能在等待CPU调度
-        BLOCKED,          //锁阻塞。当一个线程试图获取一个对象锁，而该对象锁被其他的线程持有，则该线程进入Blocked状态；当该线程持有锁时，该线程将变成Runnable状态。
-        WAITING,					//无限等待。一个线程在等待另一个线程执行一个（唤醒）动作时，该线程进入Waiting状态。进入这个状态后是不能自动唤醒的，必须等待另一个线程调用notify或者notifyAll方法才能够唤醒。
-        TIMED_WAITING,		//计时等待。 同waiting状态，有几个方法有超时参数，调用他们将进入Timed Waiting状态。这一状态将一直保持到超时期满或者接收到唤醒通知。带有超时参数的常用方法有Thread.sleep 、Object.wait。
+        RUNNABLE,         
+        BLOCKED,          
+        WAITING,					
+        TIMED_WAITING,
         TERMINATED;
     }
 ```
 
+1. NEW ：             新建。
+2. RUNNABLE：  可运行。可能正在运行，也可能在等待CPU调度。
+3. BLOCKED：     锁阻塞。当一个线程试图获取一个对象锁，而该对象锁被其他的线程持有，则该线程进入Blocked状态；当该线程持有锁时，该线程将变成Runnable状态。
+4. WAITING：      无限等待。一个线程在等待另一个线程执行一个（唤醒）动作时，该线程进入Waiting状态。进入这个状态后是不能自动唤醒的，必须等待另一个线程调用notify或者notifyAll方法才能够唤醒。
+5. TIMED_WAITING： 计时等待。 同waiting状态，有几个方法有超时参数，调用他们将进入Timed Waiting状态。这一状态将一直保持到超时期满或者接收到唤醒通知。带有超时参数的常用方法有Thread.sleep 、Object.wait。
+6. TERMINATED： 终止。
