@@ -56,7 +56,7 @@ HotSpot VM 把 GC 分代收集扩展至方法区, 即**使用** **Java** **堆�
 
 - 新生代垃圾回收采用**复制算法**，步骤是**复制**->**清空**->**互换**：
 
-​        **1**: **eden**、**servicorFrom** 复制到 **ServicorTo**，年龄**+1**
+​        **1**: **eden**、**servicorFrom** 复制到 **ServicorTo**，年龄+1
 
 ​         首先，把 Eden 和 ServivorFrom 区域中存活的对象复制到 ServicorTo 区域(如果有对象的年龄以及达到了老      年的标准，则赋值到老年代区)，同时把这些对象的年龄+1(如果 ServicorTo 不 够位置了就放到老年区);
 
