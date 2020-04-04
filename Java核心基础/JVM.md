@@ -235,7 +235,5 @@ Serial的多线程版本。ParNew 收集器默认开启和 CPU 数目相同的�
 
 hotspot虚拟机真正意义上的并发收集器。
 
-􏳩􏳪􏰺􏰻􏵌 
-
 ### G1（Garbage-First）垃圾收集器
 
