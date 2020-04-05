@@ -36,8 +36,26 @@ public enum State {
 ```
 
 1. NEW ：             新建。
+
 2. RUNNABLE：  可运行。可能正在运行，也可能在等待CPU调度。
+
 3. BLOCKED：     锁阻塞。当线程等待 synchronized 的隐式锁。synchronized 修饰的方法、代码块同一时刻只允许一个线程执行，其他线程只能等待，这种情况下，等待的线程就会从 RUNNABLE 转换到 BLOCKED 状态。而当等待的线程获得 synchronized 隐式锁时，就又会从 BLOCKED 转换到 RUNNABLE 状态。
+
 4. WAITING：      无限等待。一个线程在等待另一个线程执行一个（唤醒）动作时，该线程进入Waiting状态。进入这个状态后是不能自动唤醒的，必须等待另一个线程调用notify或者notifyAll方法才能够唤醒。调用wait()，join()会进入这个状态。
+
 5. TIMED_WAITING： 计时等待。 同waiting状态，有几个方法有超时参数，调用他们将进入Timed Waiting状态。这一状态将一直保持到超时期满或者接收到唤醒通知。带有超时参数的常用方法有Thread.sleep 、Object.wait。
-6. TERMINATED： 终止。线程正常执行完run()方法，或者interrupt()。
+
+6. TERMINATED： 终止。
+
+   > 一般有四种方式能终止线程：
+   >
+   > 1. 程序运行结束，自动终止。
+   >
+   > 2. 使用退出标志位退出线程。
+   > 3. 使用interrupt()退出线程。有两种情况：当程序处于阻塞状态时，调用线程的interrupt()方法会抛出InterruptException，捕获该异常，通过break结束。当程序处于未阻塞状态时，使用isInterrupt()判断线程是否被中断，当线程被interrupt()时，中断标志位为true，和退出标志位差不多。
+   > 4. 使用stop()等方法，不推荐。
+
+## 线程死锁
+
+多个线程都在等待一个或者多个资源被释放，同时被阻塞。
+

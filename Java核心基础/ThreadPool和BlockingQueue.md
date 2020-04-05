@@ -73,6 +73,20 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
 
 其中最关键的代码就是while循环，作用是不断从WorkQueue中拉取Runnable任务，并调用其中的run()方法。
 
+此处需要注意的是：看下内部Worker类的构造方法：
+
+```java
+ 				Worker(Runnable firstTask) {
+            setState(-1); // inhibit interrupts until runWorker
+            this.firstTask = firstTask;
+            this.thread = getThreadFactory().newThread(this); //将Worker类本身传递给thread
+        }
+```
+
+将Worker类传递给thread，所以在submit()中提交任务时，通过调用work中的thread的start()方法实际上就会执行上面的run()方法。
+
+而Worker内部类中的runnable的名字firstTask，指的是这个工作线程执行的第一个任务，肯定会被封装到Worker中。
+
 ## 向线程池提交任务
 
 当我们调用submit()或者execute()方法时：
