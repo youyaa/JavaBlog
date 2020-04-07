@@ -31,11 +31,15 @@ ZooKeeper 本质上是一个分布式的小文件存储系统。提供基于类�
 
    观察者角色，观察 Zookeeper 集群的最新状态变化并将这些状态同步过来，其对于非事务请求可以进行独立处理，对于事务请求，则会转发给 Leader 服务器进行处理。
 
-   不会参与任何形式的投票只提供非事务服务，通常用于在不影响集群事务 处理能力的前提下提升集群的非事务处理能力。
+   不会参与任何形式的投票只提供非事务服务，通常用于在不影响集群事务处理能力的前提下提升集群的非事务处理能力。
+
+   > 为什么不增加Server呢？Server增多，投票阶段延迟增大，影响性能，而增加Observer并不参与到投票中，又增加了系统的吞吐量。
 
 ### Zookeeper集群搭建
 
-通常由**2N+1(奇数)**台Server组成，这是为了保证Leader选举**(基于 Paxos 算法)**能得到多数的支持。
+通常由**2N+1(奇数)**台Server组成，为了保证多台机器之间的数据一致性，Zookeeper使用基于 **Paxos 协议**开发的**ZAB(ZooKeeper Atomic Broadcast )**一致性协议。
+
+> 关于ZAB一致性协议，在分布式模块中会详细讲述。
 
 ## Zookeeper Shell
 
@@ -152,13 +156,13 @@ Zookeeper 中的 watch 机制，必须客户端先去服务端注册监听，这
 
 同一个事件类型在不同的通知状态中代表的含义有所不同，下表列举了常见的通知状态和事件类型：
 
-![Zookeeper watch事件类型](imh/Zookeeper watch事件类型.png)
+![Zookeeper watch事件类型](img/Zookeeper watch事件类型.png)
 
   其中连接状态事件(type=None, path=null)不需要客户端注册，客户端直接处理就行了。
 
 ## Zookeeper-投票选举
 
-zookeeper 默认的算法是 **FastLeaderElection**，采用投票数大于半数则胜出的逻辑。
+zookeeper 投票默认的算法是 **FastLeaderElection**，采用投票数大于半数则胜出的逻辑。
 
 ### 概念
 
