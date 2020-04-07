@@ -58,14 +58,14 @@ HotSpot VM 把 GC 分代收集扩展至方法区, 即**使用** **Java** **堆�
 
 ​        **1**: **eden**、**servicorFrom** 复制到 **ServicorTo**，年龄+1
 
-​         首先，把 Eden 和 ServivorFrom 区域中存活的对象复制到 ServicorTo 区域(如果有对象的年龄以及达到了老      年的标准，则赋值到老年代区)，同时把这些对象的年龄+1(如果 ServicorTo 不 够位置了就放到老年区);
+​         把 Eden 和 ServivorFrom 区域中存活的对象复制到 ServicorTo 区域(如果有对象的年龄以及达到了老      年的标准，则赋值到老年代区)，同时把这些对象的年龄+1(如果 ServicorTo 不 够位置了就放到老年区);
 
 ​       **2**: 清空 **eden**、**servicorFrom** 
 
-​          然后，清空 Eden 和 ServicorFrom 中的对象;
+​          清空 Eden 和 ServicorFrom 中的对象;
 
 ​		**3**: **ServicorTo** 和 **ServicorFrom** 互换
-​          最后，ServicorTo 和 ServicorFrom 互换，原 ServicorTo 成为下一次 GC 时的 ServicorFrom区。
+​           ServicorTo 和 ServicorFrom 互换，原 ServicorTo 成为下一次 GC 时的 ServicorFrom区。
 
 - 老年代存放生命周期长的对象，比较稳定，只需要回收少量对象，所以MajorGC不会频繁触发，在触发时，通常会伴随着一次MinorGC。老年代垃圾回收采用**标记-清除算法或者标记-整理算法**：
 

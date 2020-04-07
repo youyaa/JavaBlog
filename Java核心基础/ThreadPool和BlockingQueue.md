@@ -122,7 +122,52 @@ public void execute(Runnable command) {
 
 其中，核心的addWorker()方法，会将任务封装成Worker对象，并添加进workers这个Set里，添加成功后，会调用start()方法，开启线程，即执行之前不断从workQueue中拉取任务执行的逻辑。
 
+## 线程池的拒绝策略
 
+当线程池中的线程数超过最大线程数，并且等待队列也无法继续添加任务时，会执行拒绝策略。
+
+JDK中默认的拒绝策略：
+
+1. ThreadPoolExecutor.AbortPolicy：直接抛出异常来拒绝新任务。
+2. ThreadPoolExecutor.CallerRunsPolicy：只要线程池还未关闭，该策略直接在调用者线程中运行当前被丢弃的任务，可能导致线程池性能极具下降。
+3. ThreadPoolExecutor.DiscardOldestPolicy：丢弃最老的任务，即即将被执行的任务，并尝试再次添加当前任务。
+4. DiscardPolicy：直接丢弃任务，不做任何处理。
+
+以上策略都实现了RejectedExecutionHandler接口，若不能满足，可以自己拓展。
+
+## 线程池状态
+
+线程池同样有五种状态：Running, SHUTDOWN, STOP, TIDYING, TERMINATED。
+
+```java
+ private final AtomicInteger ctl = new AtomicInteger(ctlOf(RUNNING, 0));
+    private static final int COUNT_BITS = Integer.SIZE - 3;
+    private static final int CAPACITY   = (1 << COUNT_BITS) - 1;
+
+    // runState is stored in the high-order bits
+    private static final int RUNNING    = -1 << COUNT_BITS;//对应的高3位值是111
+    private static final int SHUTDOWN   =  0 << COUNT_BITS;//对应的高3位值是000
+    private static final int STOP       =  1 << COUNT_BITS;//对应的高3位值是001
+    private static final int TIDYING    =  2 << COUNT_BITS;//对应的高3位值是010
+    private static final int TERMINATED =  3 << COUNT_BITS;//对应的高3位值是011
+
+    // Packing and unpacking ctl
+    private static int runStateOf(int c)     { return c & ~CAPACITY; }
+    private static int workerCountOf(int c)  { return c & CAPACITY; }
+    private static int ctlOf(int rs, int wc) { return rs | wc; }
+```
+
+变量**ctl**定义为AtomicInteger ，记录了“线程池中的任务数量”和“线程池的状态”两个信息。共32位，其中高3位表示”线程池状态”，低29位表示”线程池中的任务数量”。
+
+- RUNNING：处于RUNNING状态的线程池能够接受新任务，以及对新添加的任务进行处理。
+- SHUTDOWN：处于SHUTDOWN状态的线程池不可以接受新任务，但是可以对已添加的任务进行处理。
+- STOP：处于STOP状态的线程池不接收新任务，不处理已添加的任务，并且会中断正在处理的任务。
+- TIDYING：当所有的任务已终止，ctl记录的”任务数量”为0，线程池会变为TIDYING状态。当线程池变为TIDYING状态时，会执行钩子函数terminated()。terminated()在ThreadPoolExecutor类中是空的，若用户想在线程池变为TIDYING时，进行相应的处理；可以通过重载terminated()函数来实现。
+- TERMINATED：线程池彻底终止的状态。
+
+状态转换：
+
+![线程池状态转换](img/线程池状态转换.png)
 
 ## 非阻塞队列和阻塞队列
 
@@ -136,6 +181,8 @@ ConcurrentLinkedQueue是一个基于链接节点的无边界的线程安全队�
  
 
 ### 阻塞队列BlockingQueue
+
+不支持Null值，会报错。
 
 BlockingQueue 对插入操作、移除操作、获取元素操作提供了四种不同的方法用于不同的场景中使用：
 
@@ -255,3 +302,4 @@ SynchronousQueue对于正在等待的生产者和使用者线程而言，默认�
   - isEmpty()：永远是true。
   - remainingCapacity() ：永远是0。
   - remove()和removeAll() ：永远是false。
+
