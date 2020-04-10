@@ -76,7 +76,8 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
 此处需要注意的是：看下内部Worker类的构造方法：
 
 ```java
- 				Worker(Runnable firstTask) {
+ 	private final class Worker extends AbstractQueuedSynchronizer
+        implements RunnableWorker(Runnable firstTask) {
             setState(-1); // inhibit interrupts until runWorker
             this.firstTask = firstTask;
             this.thread = getThreadFactory().newThread(this); //将Worker类本身传递给thread
