@@ -37,7 +37,7 @@ ZooKeeper 本质上是一个分布式的小文件存储系统。提供基于类�
 
 ### Zookeeper集群搭建
 
-通常由**2N+1(奇数)**台Server组成，为了保证多台机器之间的数据一致性，Zookeeper使用基于 **Paxos 协议**开发的**ZAB(ZooKeeper Atomic Broadcast )**一致性协议。
+通常由**2N+1(奇数)**台Server组成，为了保证多台机器之间的写数据一致性，Zookeeper使用参考了Paxos 协议开发的ZAB(ZooKeeper Atomic Broadcast )一致性协议。
 
 > 关于ZAB一致性协议，在分布式模块中会详细讲述。
 
@@ -107,6 +107,12 @@ ZooKeeper 的数据模型，在结构上和标准文件系统的非常相似，�
 **mZxid **: Znode 被修改的事务 id，即每次对 znode 的修改都会更新 mZxid。
 
 > 对于 zk 来说，每次的变化都会产生一个唯一的事务 id，zxid(ZooKeeperTransaction Id)。通过 zxid，可以确定更新操作的先后顺序。例如，如果 zxid1 小于 zxid2，说明 zxid1 操作先于 zxid2 发生，zxid 对于整个 zk 都是唯一的， 即使操作的是不同znode。
+>
+> 在 ZAB 协议的事务编号 Zxid 设计中，Zxid 是一个 64 位的数字，其中低 32 位是一个简单的单调递增的计数器，针对客户端每一个事务请求，计数器加 1；而高 32 位则代表 Leader 周期 epoch 的编号，每个当选产生一个新的 Leader 服务器，就会从这个 Leader 服务器上取出其本地日志中最大事务的ZXID，并从中读取 epoch 值，然后加 1，以此作为新的 epoch，并将低 32 位从 0 开始计数。
+>
+> epoch：可以理解为当前集群所处的年代或者周期，每个 leader 就像皇帝，都有自己的年号，所以每次改朝换代，leader 变更之后，都会在前一个年代的基础上加 1。这样就算旧的 leader 崩溃恢复之后，也没有人听他的了，因为 follower 只听从当前年代的 leader 的命令。
+
+
 
 **ctime**:  节点创建时的时间戳。
 
@@ -123,6 +129,11 @@ ZooKeeper 提供了分布式数据发布/订阅功能，一个典型的发布/�
 ZooKeeper 中，引入了 Watcher 机制来实现这种分布式的通知功能。 ZooKeeper 允许客户端向服务端注册一个 Watcher 监听，当服务端的一些事件触 发了这个 Watcher，那么就会向指定客户端发送一个事件通知来实现分布式的通 知功能。
 
 触发事件种类很多，如:节点创建，节点删除，节点改变，子节点改变等。
+
+> 总体说来有两类watch：
+>
+> 1. DataWatches：基于Znode节点的数据变更而触发，例如：`getData()`、`exists()`、`setData()`、 `create()`。
+> 2. ChildWatches：基于Znode节点的子节点发生变更而触发，例如：`getChildren()`、 `create()`。
 
 总的来说可以概括 Watcher 为以下三个过程:客户端向服务端注册 Watcher、 服务端事件发生触发 Watcher、客户端回调 Watcher 得到触发事件情况。
 
@@ -257,3 +268,85 @@ LEADING，领导者状态。
 
 
 ![应用](img/配置中心、dubbo.png)
+
+## ZAB（ZooKeeper Atomic Broadcast ）一致性协议
+
+为了保证写操作的一致性与可用性，Zookeeper专门设计了一种名为原子广播（ZAB）的支持崩溃恢复的一致性协议。基于该协议，**Zookeeper实现了一种主从模式的系统架构来保持集群中各个副本之间的数据一致性**。
+
+根据ZAB协议，所有的写操作都必须通过Leader完成，Leader写入本地日志后再复制到所有的Follower节点。
+
+一旦Leader节点无法工作，ZAB协议能够自动从Follower节点中重新选出一个合适的替代者，即新的Leader，该过程即为领导选举。该领导选举过程，是ZAB协议中最为重要和复杂的过程。
+
+### 写Leader
+
+![writeleader](img/writeleader.png)
+
+由上图可见，通过Leader进行写操作，主要分为五步：
+
+1. 客户端向Leader发起写请求
+2. Leader将写请求以Proposal的形式发给所有Follower并等待ACK（**广播**）
+3. Follower收到Leader的Proposal后返回ACK
+4. Leader得到过半数的ACK（Leader对自己默认有一个ACK）后向所有的Follower和Observer发送Commmit
+5. Leader将处理结果返回给客户端
+
+这里要注意
+
+- Leader并不需要得到Observer的ACK，即Observer无投票权
+- Leader不需要得到所有Follower的ACK，只要收到过半的ACK即可，同时Leader本身对自己有一个ACK。上图中有4个Follower，只需其中两个返回ACK即可，因为(2+1) / (4+1) > 1/2
+- Observer虽然无投票权，但仍须同步Leader的数据从而在处理读请求时可以返回尽可能新的数据
+
+### 写Follower/Observer
+
+- Follower/Observer均可接受写请求，但不能直接处理，而需要将写请求转发给Leader处理。
+- 除了多了一步请求转发，其它流程与直接写Leader无任何区别。
+
+### 读操作
+
+Leader/Follower/Observer都可直接处理读请求，从本地内存中读取数据并返回给客户端即可。
+
+由于处理读请求不需要服务器之间的交互，Follower/Observer越多，整体可处理的读请求量越大，也即读性能越好。
+
+> 但是，如果增加Follower会因要参加投票而增加耗时，所以为了增加读请求的吞吐量，可以增加Observer。
+
+## ZAB协议的四个阶段
+
+#### Phase 0: Leader election（选举阶段）
+
+节点在一开始都处于选举阶段，只要有一个节点得到超半数节点的票数，它就可以当选准 leader。只有到达 Phase 3 准 leader 才会成为真正的 leader。这一阶段的目的是就是为了选出一个准 leader，然后进入下一个阶段。
+
+协议并没有规定详细的选举算法，后面我们会提到实现中使用的 Fast Leader Election。
+
+#### Phase 1: Discovery（发现阶段）
+
+在这个阶段，followers 跟准 leader 进行通信，同步 followers 最近接收的事务提议。这个一阶段的主要目的是发现当前大多数节点接收的最新提议，并且准 leader 生成新的 epoch，让 followers 接受，更新它们的acceptedEpoch。
+
+#### Phase 2: Synchronization（同步阶段）
+
+同步阶段主要是利用 leader 前一阶段获得的最新提议历史，同步集群中所有的副本。只有当 quorum 都同步完成，准 leader 才会成为真正的 leader。follower 只会接收 zxid 比自己的 lastZxid 大的提议。
+
+#### Phase 3: Broadcast（广播阶段）
+
+到了这个阶段，Zookeeper 集群才能正式对外提供事务服务，并且 leader 可以进行消息广播。同时如果有新的节点加入，还需要对新节点进行同步。
+
+值得注意的是，ZAB 提交事务并不像 2PC 一样需要全部 follower 都 ACK，只需要得到 quorum （超过半数的节点）的 ACK 就可以了。
+
+## 协议实现
+
+协议的 Java 版本实现跟上面的定义有些不同，选举阶段使用的是 Fast Leader Election（FLE），它包含了 Phase 1 的发现职责。因为 FLE 会选举拥有最新提议历史的节点作为 leader，这样就省去了发现最新提议的步骤。实际的实现将 Phase 1 和 Phase 2 合并为 Recovery Phase（恢复阶段）。所以，ZAB 的实现只有三个阶段：
+
+- **Fast Leader Election**
+- **Recovery Phase**
+- **Broadcast Phase**
+
+### Fast Leader Election
+
+前面提到 FLE 会选举拥有最新提议历史（lastZixd最大）的节点作为 leader，这样就省去了发现最新提议的步骤。这是基于拥有最新提议的节点也有最新提交记录的前提。
+
+#### 成为 leader 的条件
+
+1. 选`epoch`最大的
+2. `epoch`相等，选 zxid 最大的
+3. `epoch`和`zxid`都相等，选择`server id`最大的（就是我们配置`zoo.cfg`中的`myid`）
+
+节点在选举开始都默认投票给自己，ß当接收其他节点的选票时，会根据上面的条件更改自己的选票并重新发送选票给其他节点，当有一个节点的得票超过半数，该节点会设置自己的状态为 leading，其他节点会设置自己的状态为 following。
+
