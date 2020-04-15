@@ -1,6 +1,67 @@
 >HashMap在并发下有可能出现环形链表，导致死循环，CPU飙升到100%，并发下，我们应该使用ConcurrentHashMap。
 
+## Collections.synchronizedMap()
+
+通过Collections.synchronizedMap()方式将一个Map变为线程安全的map。
+
+```java
+Map<Object, Object> objectObjectMap = Collections.synchronizedMap(new HashMap<Object, Object>());
+```
+
+返回的Map实际上是一个SynchronizedMap。其内部持有一个map和全局mutex锁。
+
+```java
+private static class SynchronizedMap<K,V>
+    implements Map<K,V>, Serializable {
+        private final Map<K,V> m;     // Backing Map
+        final Object      mutex;        // Object on which to synchronize
+        SynchronizedMap(Map<K,V> m) {
+            this.m = Objects.requireNonNull(m);
+            mutex = this;
+        }
+        SynchronizedMap(Map<K,V> m, Object mutex) {
+            this.m = m;
+            this.mutex = mutex;
+        }
+}
+```
+
+其中的方法都是同步的。
+
+```java
+ public int size() {
+            synchronized (mutex) {return m.size();}
+        }
+        public boolean isEmpty() {
+            synchronized (mutex) {return m.isEmpty();}
+        }
+        public boolean containsKey(Object key) {
+            synchronized (mutex) {return m.containsKey(key);}
+        }
+        public boolean containsValue(Object value) {
+            synchronized (mutex) {return m.containsValue(value);}
+        }
+        public V get(Object key) {
+            synchronized (mutex) {return m.get(key);}
+        }
+        public V put(K key, V value) {
+            synchronized (mutex) {return m.put(key, value);}
+        }
+        public V remove(Object key) {
+            synchronized (mutex) {return m.remove(key);}
+        }
+        public void putAll(Map<? extends K, ? extends V> map) {
+            synchronized (mutex) {m.putAll(map);}
+        }
+        public void clear() {
+            synchronized (mutex) {m.clear();}
+        }
+```
+
+
+
 ## JDK1.8之前的实现
+
 JDK1.8之前采用复杂的“分段锁”来实现线程安全。
 
 来看一下内部的结构图：
@@ -124,3 +185,20 @@ ConcurrentHashMap 的 get 方法是非常高效的，因为整个过程都不需
 其中抛弃了原有的 Segment 分段锁，而采用了 CAS + synchronized 来保证并发安全性。
 
 具体的分析可参考 https://crossoverjie.top/2018/07/23/java-senior/ConcurrentHashMap/
+
+
+
+## Fail-fast 快速失败
+
+是java集合中的一种机制， 在用迭代器遍历一个集合对象时，如果遍历过程中对集合对象的内容进行了修改（增加、删除、修改），则会抛出Concurrent Modification Exception。
+
+迭代器在遍历时直接访问集合中的内容，并且在遍历过程中使用一个 modCount 变量。
+
+集合在被遍历期间如果内容发生变化，就会改变modCount的值。
+
+每当迭代器使用hashNext()/next()遍历下一个元素之前，都会检测modCount变量是否为expectedmodCount值，是的话就返回遍历；否则抛出异常，终止遍历。
+
+**Tip**：这里异常的抛出条件是检测到 modCount！=expectedmodCount 这个条件。如果集合发生变化时修改modCount值刚好又设置为了expectedmodCount值，则异常不会抛出。
+
+因此，不能依赖于这个异常是否抛出而进行并发操作的编程，这个异常只建议用于检测并发修改的bug。
+

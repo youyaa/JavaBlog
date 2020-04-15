@@ -38,6 +38,82 @@ Java 作为高级语言，屏蔽了这些底层细节，用 JMM 定义了一套�
 
 ### Happens-before Order
 
+前面一个操作的结果对后续操作是可见的。就像有心灵感应的两个人，虽然远隔千里，一个人心之所想，另一个人都看得到。Happens-Before 规则就是要保证线程之间的这种“心灵感应”。
+
+所以比较正式的说法是：Happens-Before 约束了编译器的优化行为，虽允许编译器优化，但是要求编译器优化后一定遵守 Happens-Before 规则。
+
+1. **程序的顺序性规则**
+
+   这条规则是指在一个线程中，按照程序顺序，前面的操作 Happens-Before 于后续的任意操作。
+
+2. **volatile 变量规则**
+
+   这条规则是指对一个 volatile 变量的写操作， Happens-Before 于后续对这个 volatile 变量的读操作。
+
+   这个就有点费解了，对一个 volatile 变量的写操作相对于后续对这个 volatile 变量的读操作可见，这怎么看都是禁用缓存的意思啊，貌似和 1.5 版本以前的语义没有变化啊？如果单看这个规则，的确是这样，但是如果我们关联一下规则 3，就有点不一样的感觉了。
+
+3. **管程锁定规则**
+
+   这条规则是指对一个锁的解锁 Happens-Before 于后续对这个锁的加锁。
+
+   要理解这个规则，就首先要了解“管程指的是什么”。管程是一种通用的同步原语，在 Java 中指的就是 synchronized，synchronized 是 Java 里对管程的实现。
+
+   管程中的锁在 Java 里是隐式实现的，例如下面的代码，在进入同步块之前，会自动加锁，而在代码块执行完会自动释放锁，加锁以及释放锁都是编译器帮我们实现的
+
+   ```java
+   synchronized (this) { //此处自动加锁
+     // x是共享变量,初始值=10
+     if (this.x < 12) {
+       this.x = 12; 
+     }  
+   } //此处自动解锁
+   ```
+
+​      	可以这样理解：假设 x 的初始值是 10，线程 A 执行完代码块后 x 的值会变成 12（执行完自动释放锁），线   程 B 进入代码块时，能够看到线程 A 对 x 的写操作，也就是线程 B 能够看到 x==12。
+
+4. **线程启动规则**
+
+   它是指主线程 A 启动子线程 B 后，子线程 B 能够看到主线程在启动子线程 B 前的操作。
+
+6. **线程的终止规则**
+
+   它是指主线程 A 等待子线程 B 完成（主线程 A 通过调用子线程 B 的 join() 方法实现），当子线程 B 完成后（主线程 A 中 join() 方法返回），主线程能够看到子线程的操作。当然所谓的“看到”，指的是对共享变量的操作。
+
+7. **线程中断规则**
+
+   对线程interrupt()方法的调用happens-before于被中断线程代码检测中断。既可以通过Thread.interrupt()检测到是否被中断。
+
+8. **传递特性**
+
+这条规则是指如果 A Happens-Before B，且 B Happens-Before C，那么 A Happens-Before C。
+
+```java
+//实例代码
+class VolatileExample {
+  int x = 0;
+  volatile boolean v = false;
+  public void writer() {
+    x = 42;
+    v = true;
+  }
+  public void reader() {
+    if (v == true) {
+      // 这里x会是多少呢？
+    }
+  }
+}
+```
+
+![传递规则](img/Happens-before传递规则.png)
+
+1. “x=42” Happens-Before 写变量 “v=true” ，这是规则 1 的内容；
+
+2. 写变量“v=true” Happens-Before 读变量 “v=true”，这是规则 2 的内容 。
+
+再根据这个传递性规则，我们得到结果：“x=42” Happens-Before 读变量“v=true”。这意味着什么呢？如果线程 B 读到了“v=true”，那么线程 A 设置的“x=42”对线程 B 是可见的。
+
+
+
 ## Synchronized 关键字
 
 一个线程在获取到监视器锁以后才能进入 synchronized 控制的代码块，一旦进入代码块，首先，该线程对于共享变量的缓存就会失效，因此 synchronized 代码块中对于共享变量的读取需要从主内存中重新获取，也就能获取到最新的值。

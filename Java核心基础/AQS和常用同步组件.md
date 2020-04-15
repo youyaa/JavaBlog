@@ -45,7 +45,7 @@ AQS定义两种资源共享方式：
 > - isHeldExclusively()：当前同步器是否在独占式模式下被线程占用，一般该方法表示是否被当前线程所独占。只有用到condition才需要去实现它。
 > - tryAcquire(int)：独占方式。尝试获取同步状态，成功则返回true，失败则返回false。其他线程需要等待该线程释放同步状态才能获取同步状态。
 > - tryRelease(int)：独占方式。尝试释放同步状态，成功则返回true，失败则返回false。
-> - tryAcquireShared(int)：共享方式。尝试获取同步状态。负数表示失败；0表示成功，但没有剩余可用资源；正数表示成功，且有剩余资源。
+> - tryAcquireShared(int)：共享方式。尝试获取sz同步状态。负数表示失败；0表示成功，但没有剩余可用资源；正数表示成功，且有剩余资源。
 > - tryReleaseShared(int)：共享方式。尝试释放同步状态，如果释放后允许唤醒后续等待结点，返回true，否则返回false。
 
 ### CLH虚拟同步队列
@@ -110,7 +110,7 @@ CLH同步队列遵循FIFO，首节点的线程释放同步状态后，将会唤�
 
 ## 结构
 
-继承自AQS的Sync静态内部类，而有继承自Sync的两个NonfairSync和FairSync静态内部类，表示不公平锁和公平锁。
+继承自AQS的Sync静态内部类，而有继承自Sync的两个NonfairSync和FairSync静态内部类，表示非公平锁和公平锁。
 
 ## 加锁过程
 
@@ -161,6 +161,8 @@ public class ConditionObject implements Condition, java.io.Serializable {
 ### 等待队列
 
 每个Condition对象都包含着一个**FIFO队列**，该队列是Condition对象通知/等待功能的关键。在队列中每一个节点都包含着一个线程引用，该线程就是在该Condition对象上等待的线程。
+
+![阻塞队列和条件队列](img/阻塞队列和条件队列.png)
 
 ```java
 public class ConditionObject implements Condition, java.io.Serializable {
@@ -227,6 +229,8 @@ public final void await() throws InterruptedException {
 ### 通知（signal）
 
 调用Condition的signal()方法，将会唤醒在等待队列中等待最长时间的节点（条件队列里的首节点），在唤醒节点前，会将节点移到CLH同步队列中。
+
+调用`condition1.signal()` 触发一次唤醒，此时唤醒的是队头，会将condition1 对应的**条件队列**的 firstWaiter（队头） 移到**阻塞队列的队尾**，等待获取锁，获取锁后 await 方法才能返回，继续往下执行。
 
 ```java
 public final void signal() {

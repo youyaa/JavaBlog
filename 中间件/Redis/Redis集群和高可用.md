@@ -159,8 +159,6 @@ sentinel parallel-syncs mymaster 1
 
   设置failover（故障转移）的过期时间。当failover开始后，在此时间内仍然没有触发任何failover操作，当前 sentinel 会认为此次failover失败。
 
-  > 
-
 - sentinel parallel-syncs mymaster 1
 
   设置在执行故障转移时， 最多可以有多少个从服务器同时对新的主服务器进行同步， 这个数字越小，表示同时进行同步的从服务器越少，那么完成故障转移所需的时间就越长。
