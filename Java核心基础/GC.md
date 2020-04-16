@@ -124,7 +124,7 @@ JDK1.2以后，Java对引用的概念进行了扩充，将引用分为强引用�
 
 垃圾回收主要是回收堆内存。从GC角度，堆内存细分为：**新生代**(Eden 区、From Survivor 区和 To Survivor 区)和**老年代**。
 
-![堆内存细分](/Applications/program/common/java-blog/JavaBlog/Java核心基础/img/堆内存细分.png)
+![堆内存细分](img/堆内存细分.png)
 
 因为新生代会频繁创建对象，所以新生代会触发频繁的**MinorGC**。
 
