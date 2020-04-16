@@ -56,22 +56,26 @@ HashMap，是一种根据关键码值（Key）去访问的value一种数据结�
 
   相当于将hashCode的高16位和低16位做一个异或的运算，将落点分布均匀，减少hash冲突。
 
-- 平时在使用HashMap时一般使用什么类型的元素作为Key，如何自定义key的类型？
+  
 
-使用String或者Integer这样的类。这些类是Immutable(不可变)的，并且这些类已经很规范的覆写了hashCode()以及equals()方法。作为不可变类天生是线程安全的，而且可以很好的优化比如可以缓存hash值，避免重复计算等等。
+- **平时在使用HashMap时一般使用什么类型的元素作为Key，如何自定义key的类型？**
 
->1. 重载hashCode()是为了对同一个key，能得到相同的HashCode，这样HashMap就可以定位到我们指定的桶上。
->
->2. 重载equals()是为了向HashMap表明当前对象和key上所保存的对象是相等的，这样我们才真正地获得了这个key所对应的这个键值对。
+  使用String或者Integer这样的类。这些类是Immutable(不可变)的，并且这些类已经很规范的覆写了hashCode()以及equals()方法。作为不可变类天生是线程安全的，而且可以很好的优化比如可以缓存hash值，避免重复计算等等。
 
-- 为什么HashMap中bucket的大小为什么是2的幂？
+  >1. 重载hashCode()是为了对同一个key，能得到相同的HashCode，这样HashMap就可以定位到我们指定的桶上。
+  >2. 重载equals()是为了向HashMap表明当前对象和key上所保存的对象是相等的，这样我们才真正地获得了这个key所对应的这个键值对。
 
->这里的h是”int hash = hash(key.hashCode());”, 也就是根据key的hashCode再次进行一次hash操作计算出来的 . 
-length是Entry数组的长度 . 
-一般我们利用hash码, 计算出在一个数组的索引, 常用方式是”h % length”, 也就是求余的方式 . 
-可能是这种方式效率不高, SUN大师们发现, “当容量一定是2^n时，h & (length - 1) == h % length” . 按位运算特别快 . 
 
-- HashMap的扩容机制
+
+- **为什么HashMap中bucket的大小为什么是2的幂？**
+
+  这里的h是”int hash = hash(key.hashCode());”, 也就是根据key的hashCode再次进行一次hash操作计算出来的 。length是Entry数组的长度 。
+  一般我们利用hash码, 计算出在一个数组的索引, 常用方式是”h % length”, 也就是求余的方式 . 
+  可能是这种方式效率不高, SUN大师们发现, “当容量一定是2^n时，h & (length - 1) == h % length” . 按位运算特别快 . 
+
+  
+
+- **HashMap的扩容机制**
 
   - 扩容：创建一个新的Entry空数组，长度是原数组的2倍。
 
@@ -79,7 +83,7 @@ length是Entry数组的长度 .
 
     
 
-- 你知道HashMap中链表的插入方式吗？
+- **你知道HashMap中链表的插入方式吗？**
 
   Java8之前都是头插法，Java8之后就改为了尾插法。
 
@@ -87,7 +91,7 @@ length是Entry数组的长度 .
 
 
 
-- 为什么HashMap的初始化容量是16？
+- **为什么HashMap的初始化容量是16？**
 
   我觉得就是一个经验值，定义16没有很特别的原因，只要是2次幂，其实用 8 和 32 都差不多。
 
@@ -95,36 +99,42 @@ length是Entry数组的长度 .
 
   
 
-- Hashmap中的链表大小超过八个时会自动转化为红黑树，当删除小于六时重新变为链表，为啥呢？
+- **Hashmap中的链表大小超过八个时会自动转化为红黑树，当删除小于六时重新变为链表，为啥呢？**
 
-根据泊松分布，在负载因子默认为0.75的时候，单个hash槽内元素个数为8的概率小于百万分之一，所以将7作为一个分水岭，等于7的时候不转换，大于等于8的时候才进行转换，小于等于6的时候就化为链表。
-
-
+  根据泊松分布，在负载因子默认为0.75的时候，单个hash槽内元素个数为8的概率小于百万分之一，所以将7作为一个分水岭，等于7的时候不转换，大于等于8的时候才进行转换，小于等于6的时候就化为链表。
 
 
-- HashSet的底层原理
 
-new一个hashset时,就是new了一个hashmap
 
-```java
-HashSet hashSet = new HashSet();   
-hashSet.add("1");
-public HashSet() { 
-     map = new HashMap<>(); 
-     }
-```
-当我们调用HashSet的add方法时,实际是向hashmap增加了一行键值对,key就是HashSet的对象,value就是Object类型的常量.
+- **HashSet的底层原理**
 
-```java
-public boolean add(E e) {
-    return map.put(e, PRESENT)==null;
-}
-```
+  new一个hashset时,就是new了一个hashmap
 
-- ArrayList与Vector的区别
-既然说到了同步，那我们面试时的一个经典问题就是ArrayList和Vector的区别？
+  ```java
+  HashSet hashSet = new HashSet();   
+  hashSet.add("1");
+  public HashSet() { 
+       map = new HashMap<>(); 
+       }
+  ```
 
-不要说vector是线程安全的，要说vector在add的时候使用了同步函数，方法上加上了synchronized关键字，ArrayList的add方法是没有加上这个关键字的。当存储空间不足的时候，ArrayList默认增加为原来的50%，Vector默认增加为原来的一倍。
+  当我们调用HashSet的add方法时,实际是向hashmap增加了一行键值对,key就是HashSet的对象,value就是Object类型的常量.
+
+  ```java
+  public boolean add(E e) {
+      return map.put(e, PRESENT)==null;
+  }
+  ```
+
+  
+
+- **ArrayList与Vector的区别**
+
+  既然说到了同步，那我们面试时的一个经典问题就是ArrayList和Vector的区别？
+
+  不要说vector是线程安全的，要说vector在add的时候使用了同步函数，方法上加上了synchronized关键字，ArrayList的add方法是没有加上这个关键字的。当存储空间不足的时候，ArrayList默认增加为原来的50%，Vector默认增加为原来的一倍。
+
+
 
 ## Hash算法
 
