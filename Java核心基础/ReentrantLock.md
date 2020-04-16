@@ -1,5 +1,3 @@
-> 关于ReentrantLock的源码分析见 AQS和同步组件一章
-
 ## 为什么要有ReentrantLock
 
 在如何避免思死锁中有一个方法：破坏不可抢占条件，但是Synchronized在获取锁失败后，就会进入阻塞状态。
@@ -52,3 +50,50 @@ class X {
 1. 顺序性规则：对于线程 T1，value+=1 Happens-Before 释放锁的操作 unlock()；
 2. volatile 变量规则：由于 state = 1 会先读取 state，所以线程 T1 的 unlock() 操作 Happens-Before 线程 T2 的 lock() 操作；
 3. 传递性规则：线程 T1 的 value+=1 Happens-Before 线程 T2 的 lock() 操作。
+
+
+
+## ReentrantLock实现原理
+
+基于AQS的同步组件。
+
+## 结构
+
+继承自AQS的Sync静态内部类，而有继承自Sync的两个NonfairSync和FairSync静态内部类，表示非公平锁和公平锁。
+
+## 加锁过程
+
+1、设置AbstractQueuedSynchronizer的state为1。
+
+2、设置AbstractOwnableSynchronizer的thread为当前线程。
+
+3、如果获取锁失败，则进入到CLH队列中，并再次判断能都获取到锁，否则调用LockSupport.park(this);阻塞当前队列。
+
+### 解锁过程
+
+1、获取到state的值，并不断-1。
+
+2、设置AbstractOwnableSynchronizer的thread为null。
+
+3、获取CLH队列上的第一个节点，调用LockSupport.unpark(s.thread);唤醒。
+
+### 公平锁的原理
+
+公平锁和非公平锁锁的却别就在于，加锁的时候，公平锁这样一行代码：
+
+```java
+public final boolean hasQueuedPredecessors() {
+        // The correctness of this depends on head being initialized
+        // before tail and on head.next being accurate if the current
+        // thread is first in queue.
+        Node t = tail; // Read fields in reverse initialization order
+        Node h = head;
+        Node s;
+        return h != t &&
+            ((s = h.next) == null || s.thread != Thread.currentThread());
+    }
+```
+
+1. 此时CLH中没有其线程等待，加锁成功。
+2. 该线程就为CLH中的第一个节点，加锁成功。
+3. 其他情况，加锁失败，进入阻塞队列等待。

@@ -104,51 +104,6 @@ CLH同步队列遵循FIFO，首节点的线程释放同步状态后，将会唤�
 
 ![CLH出队](img/CLH出队.png)
 
-## ReentrantLock实现原理
-
-基于AQS的同步组件。
-
-## 结构
-
-继承自AQS的Sync静态内部类，而有继承自Sync的两个NonfairSync和FairSync静态内部类，表示非公平锁和公平锁。
-
-## 加锁过程
-
-1、设置AbstractQueuedSynchronizer的state为1。
-
-2、设置AbstractOwnableSynchronizer的thread为当前线程。
-
-3、如果获取锁失败，则进入到CLH队列中，并再次判断能都获取到锁，否则调用LockSupport.park(this);阻塞当前队列。
-
-### 解锁过程
-
-1、获取到state的值，并不断-1。
-
-2、设置AbstractOwnableSynchronizer的thread为null。
-
-3、获取CLH队列上的第一个节点，调用LockSupport.unpark(s.thread);唤醒。
-
-### 公平锁的原理
-
-公平锁和非公平锁锁的却别就在于，加锁的时候，公平锁这样一行代码：
-
-```java
-public final boolean hasQueuedPredecessors() {
-        // The correctness of this depends on head being initialized
-        // before tail and on head.next being accurate if the current
-        // thread is first in queue.
-        Node t = tail; // Read fields in reverse initialization order
-        Node h = head;
-        Node s;
-        return h != t &&
-            ((s = h.next) == null || s.thread != Thread.currentThread());
-    }
-```
-
-1. 此时CLH中没有其线程等待，加锁成功。
-2. 该线程就为CLH中的第一个节点，加锁成功。
-3. 其他情况，加锁失败，进入阻塞队列等待。
-
 ## JUC中Condition
 
 从Lock中调用newCondition()方法，返回的实际上AQS中的一个内部类ConditionObject。
