@@ -1,6 +1,6 @@
 ## 垃圾回收
 
-![垃圾回收](/Applications/program/common/java-blog/JavaBlog/Java核心基础/img/垃圾回收.png)
+![垃圾回收](img/垃圾回收.png)
 
 ### 如何确定垃圾
 
