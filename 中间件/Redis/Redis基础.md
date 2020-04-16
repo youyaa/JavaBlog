@@ -44,11 +44,11 @@ Redis的队列不支持消息多播，而pub/sub支持多播
 
 ### Redis支持的数据结构
 
--  **String**
+- **String**
 
-Strings 数据结构是简单的key-value类型，value其实不仅是String，也可以是数字.
+  Strings 数据结构是简单的key-value类型，value其实不仅是String，也可以是数字.
 
-​		常用命令:  set,get,decr,incr,mget 等。
+  常用命令:  set,get,decr,incr,mget 等。
 
 -  **Hash**
 
@@ -212,6 +212,8 @@ appendfsync no        #让操作系统决定何时进行同步
 当 RDB 与 AOF 两种方式都开启时，Redis 会优先使用 AOF 日志来恢复数据，因为 AOF 保存的文件比 RDB 文件更完整。
 
 ### Redis事务
+
+不能保证原子性。
 
 ### Redis并发竞争key问题
 
