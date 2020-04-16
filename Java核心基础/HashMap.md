@@ -33,7 +33,7 @@ HashMap，是一种根据关键码值（Key）去访问的value一种数据结�
 
 ## HashMap常见的面试题
 
-- HashMap如何减少Hash冲突？为什么要进行两次Hash操作？
+- **HashMap如何减少Hash冲突？为什么要进行两次Hash操作？**
 
   所谓两次Hash操作是指：通过key获取hashCode以及另外一次rehash操作
 
