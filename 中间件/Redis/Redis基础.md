@@ -50,11 +50,17 @@ Redis的队列不支持消息多播，而pub/sub支持多播
 
   常用命令:  set,get,decr,incr,mget 等。
 
--  **Hash**
+- **Hash**
 
   结构化存储。
 
   常用命令：hget,hset,hgetall 等。
+
+  实现：
+
+  上面已经说到Redis Hash对应Value内部实际就是一个HashMap，实际这里会有2种不同实现，这个Hash的成员比较少时Redis为了节省内存会采用类似一维数组（**压缩列表**）的方式来紧凑存储，而不会采用真正的HashMap结构，对应的value redisObject的encoding为zipmap,当成员数量增大时会自动转成真正的HashMap,此时encoding为ht。
+
+  Redis 就使用散列表来实现字典类型。Redis 使用MurmurHash2这种运行速度快、随机性好的哈希算法作为哈希函数。对于哈希冲突问题，Redis 使用链表法来解决。除此之外，Redis 还支持散列表的动态扩容、缩容。
 
 - **List**
 
@@ -62,17 +68,43 @@ Redis的队列不支持消息多播，而pub/sub支持多播
 
   Redis list的实现为一个双向链表，即可以支持反向查找和遍历，更方便操作，不过带来了部分额外的内存开销，Redis内部的很多实现，包括发送缓冲队列等也都是用的这个数据结构。
 
+  redis的实现方式有两种：一种是压缩列表（ziplist），另一种是双向循环链表。
+
+  Redis 的这种双向链表的实现方式，非常值得借鉴。它额外定义一个 list 结构体，来组织链表的首、尾指针，还有长度等信息。这样，在使用的时候就会非常方便。
+
+  ```c
+  // 以下是C语言代码，因为Redis是用C语言实现的。
+  typedef struct listnode {
+    struct listNode *prev;
+    struct listNode *next;
+    void *value;
+  } listNode;
+  
+  typedef struct list {
+    listNode *head;
+    listNode *tail;
+    unsigned long len;
+    // ....省略其他定义
+  } list;
+  ```
+
 - **Set**
 
   常用命令：sadd,spop,smembers,sunion 等。
 
   类似list，可以自动排重。
 
--  **Sorted Set**
+  集合这种数据类型用来存储一组不重复的数据。这种数据类型也有两种实现方法，一种是基于有序数组，另一种是基于散列表。
+
+  
+
+- **Sorted Set**
 
   Redis sorted set的使用场景与set类似，区别是set不是自动有序的，而sorted set可以通过用户额外提供一个优先级(score)的参数来为成员排序，并且是插入有序的，即自动排序。
 
   常用命令：zadd,zrange,zrem,zcard等
+
+  跟 Redis 的其他数据类型一样，有序集合也并不仅仅只有跳表这一种实现方式。当数据量比较小的时候，Redis 会用压缩列表来实现有序集合。
 
   Redis sorted set的内部使用HashMap和跳跃表(SkipList)来保证数据的存储和有序，HashMap里放的是成员到score的映射，而跳跃表里存放的是所有的成员，排序依据是HashMap里存的score,使用跳跃表的结构可以获得比较高的查找效率，并且在实现上比较简单。
 

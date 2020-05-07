@@ -104,7 +104,7 @@ public class Person {
 
 **4) 以**HttpEncodingAutoConfiguration（Http编码自动配置）**为例解释自动配置原理: **
 
-     ```java
+```java
 @Configuration      //标识是个配置类，往容器中添加组件配置
 
 @EnableConfigurationProperties(HttpEncodingProperties.class) //启动指定类的ConfigurationProperties功能；将配置文件中对应的值和HttpEncodingProperties绑定起来；并把HttpEncodingProperties加入到ioc容器中
@@ -121,21 +121,22 @@ public class HttpEncodingAutoConfiguration {
   //已经和配置文件自动映射了
 	private final HttpEncodingProperties properties;
 
-	public HttpEncodingAutoConfiguration(HttpEncodingProperties properties) {
-		this.properties = properties;
-	}
-
-	@Bean   //给容器添加组件
-	@ConditionalOnMissingBean   //判断容器中是否已经存在这个Bean
-	public CharacterEncodingFilter characterEncodingFilter() {
-		CharacterEncodingFilter filter = new OrderedCharacterEncodingFilter();
-		filter.setEncoding(this.properties.getCharset().name());
-		filter.setForceRequestEncoding(this.properties.shouldForce(Type.REQUEST));
-		filter.setForceResponseEncoding(this.properties.shouldForce(Type.RESPONSE));
-		return filter;
-	}
+public HttpEncodingAutoConfiguration(HttpEncodingProperties properties) {
+	this.properties = properties;
 }
-     ```
+
+@Bean   //给容器添加组件
+@ConditionalOnMissingBean   //判断容器中是否已经存在这个Bean
+public CharacterEncodingFilter characterEncodingFilter() {
+	CharacterEncodingFilter filter = new OrderedCharacterEncodingFilter();
+	filter.setEncoding(this.properties.getCharset().name());
+	filter.setForceRequestEncoding(this.properties.shouldForce(Type.REQUEST));
+	filter.setForceResponseEncoding(this.properties.shouldForce(Type.RESPONSE));
+	return filter;
+}
+
+}
+```
 
 根据当前不同的条件判断，决定这个配置类是否生效，一但这个配置类生效；这个配置类就会给容器中添加各种组件；这些组件的属性是从对应的properties类中获取的，这些类里面的每一个属性又是和配置文件绑定的；
 
