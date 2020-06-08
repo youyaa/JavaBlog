@@ -4,7 +4,9 @@
 
 ### Thread类结构分析
 
-在Thread类中有一个内部类ThreadLocalMap：
+在ThreadLocal类中有一个内部类ThreadLocalMap，
+
+但是Thread类持有这个内部类的引用。
 
 ```java
 public class Thread implements Runnable {

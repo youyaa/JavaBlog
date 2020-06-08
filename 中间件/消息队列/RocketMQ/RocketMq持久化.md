@@ -104,7 +104,7 @@ Master角色的Broker支持读和写，Slave角色的Broker仅支持读，也就
 
 ### 1.2.2 消息发送高可用
 
-在创建Topic的时候，把Topic的多个Message Queue创建在多个Broker组上（相同Broker名称，不同 brokerId的机器组成一个Broker组），这样当一个Broker组的Master不可 用后，其他组的Master仍然可用，Producer仍然可以发送消息。 RocketMQ目前还不支持把Slave自动转成Master，如果机器资源不足， 需要把Slave转成Master，则要手动停止Slave角色的Broker，更改配置文 件，用新的配置文件启动Broker。
+在创建Topic的时候，把Topic的多个Message Queue创建在多个Broker组上（相同Broker名称，不同 brokerId的机器组成一个Broker组），这样当一个Broker组的Master不可 用后，其他组的Master仍然可用，Producer仍然可以发送消息。 RocketMQ目前还不支持把Slave自动转成Master，如果机器资源不足， 需要把Slave转成Master，则要手动停止Slave角色的Broker，更改配置文件，用新的配置文件启动Broker。
 
 ![](img/消息发送高可用设计.jpg)
 
@@ -114,13 +114,13 @@ Master角色的Broker支持读和写，Slave角色的Broker仅支持读，也就
 
 #### 1）同步复制
 
-同步复制方式是等Master和Slave均写 成功后才反馈给客户端写成功状态；
+同步复制方式是等Master和Slave均写成功后才反馈给客户端写成功状态；
 
-在同步复制方式下，如果Master出故障， Slave上有全部的备份数据，容易恢复，但是同步复制会增大数据写入 延迟，降低系统吞吐量。
+在同步复制方式下，如果Master出故障， Slave上有全部的备份数据，容易恢复，但是同步复制会增大数据写延迟，降低系统吞吐量。
 
 #### 2）异步复制 
 
-异步复制方式是只要Master写成功 即可反馈给客户端写成功状态。
+异步复制方式是只要Master写成功即可反馈给客户端写成功状态。
 
 在异步复制方式下，系统拥有较低的延迟和较高的吞吐量，但是如果Master出了故障，有些数据因为没有被写 入Slave，有可能会丢失；
 
@@ -132,7 +132,7 @@ Master角色的Broker支持读和写，Slave角色的Broker仅支持读，也就
 
 ![](img/复制刷盘.png)
 
-实际应用中要结合业务场景，合理设置刷盘方式和主从复制方式， 尤其是SYNC_FLUSH方式，由于频繁地触发磁盘写动作，会明显降低 性能。通常情况下，应该把Master和Save配置成ASYNC_FLUSH的刷盘方式，主从之间配置成SYNC_MASTER的复制方式，这样即使有一台 机器出故障，仍然能保证数据不丢，是个不错的选择。
+实际应用中要结合业务场景，合理设置刷盘方式和主从复制方式， 尤其是SYNC_FLUSH方式，由于频繁地触发磁盘写动作，会明显降低性能。通常情况下，应该把Master和Save配置成ASYNC_FLUSH的刷盘方式，主从之间配置成SYNC_MASTER的复制方式，这样即使有一台机器出故障，仍然能保证数据不丢，是个不错的选择。
 
 > 经验：异步刷盘，同步复制
 

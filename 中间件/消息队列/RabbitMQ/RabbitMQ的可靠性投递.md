@@ -15,7 +15,7 @@
 1. 消息落库，对消息状态打标。
 2. 做二次确认，回调检查。
 
-**Conform模式**
+**Confirm模式**
 
 生产者通过调用channel.confirmSelect方法将信道设置为confirm模式，一旦信道进入confirm模式，所有在该信道上面发布的消息都会被指派一个唯一的ID（从1开始），一旦消息被投递到所有匹配的队列之后，RabbitMQ就会发送一个确认（Basic.Ack）给生产者（包含消息的唯一deliveryTag和multiple参数），这就使得生产者知晓消息已经正确到达了目的地了。
 

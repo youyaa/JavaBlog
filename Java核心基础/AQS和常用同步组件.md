@@ -20,7 +20,7 @@ AQS维护了一个volatile int类型的变量state表示当前同步状态。当
 
 它提供了三个方法来对同步状态state进行操作：
 
-> getState()：返回同步状态的当前值 setState()：设置当前同步状态 compareAndSetState()：使用CAS设置当前状态，该方法能够保证状态设置的原子性
+> getState()：返回同步状态的当前值 setState()：设置当前同步状态 compareAndSetState()：使用CAS设置当前状态，该方法能够保证状态设置的原子性。
 
 这三种操作均是CAS原子操作，其中compareAndSetState的实现依赖于Unsafe的compareAndSwapInt()方法
 
@@ -45,12 +45,12 @@ AQS定义两种资源共享方式：
 > - isHeldExclusively()：当前同步器是否在独占式模式下被线程占用，一般该方法表示是否被当前线程所独占。只有用到condition才需要去实现它。
 > - tryAcquire(int)：独占方式。尝试获取同步状态，成功则返回true，失败则返回false。其他线程需要等待该线程释放同步状态才能获取同步状态。
 > - tryRelease(int)：独占方式。尝试释放同步状态，成功则返回true，失败则返回false。
-> - tryAcquireShared(int)：共享方式。尝试获取sz同步状态。负数表示失败；0表示成功，但没有剩余可用资源；正数表示成功，且有剩余资源。
+> - tryAcquireShared(int)：共享方式。尝试获取同步状态。负数表示失败；0表示成功，但没有剩余可用资源；正数表示成功，且有剩余资源。
 > - tryReleaseShared(int)：共享方式。尝试释放同步状态，如果释放后允许唤醒后续等待结点，返回true，否则返回false。
 
 ### CLH虚拟同步队列
 
-AQS内部维护着一个FIFO队列，该队列就是CLH同步队列，遵循FIFO原则（ First Input First Output先进先出）。CLH同步队列是一个FIFO双向队列，AQS依赖它来完成同步状态的管理。
+AQS内部维护着一个FIFO队列，该队列就是CLH同步队列，遵循FIFO原则（ First Input First Output先进先出）。CLH同步队列是一个FIFO双向队列，AQS依赖它来完成同步状态的管理。（虚拟队列不包含head节点）
 
 ![CLH](img/CLH虚拟队列.png)
 
