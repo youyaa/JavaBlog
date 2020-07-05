@@ -39,9 +39,84 @@ class Handler implements InvocationHandler{
 
 
 
-## Mybatis自动映射原理
+## Mybatis自动映射原理		
 
-org.apache.ibatis.binding.MapperProxy.java部分源码。
+一段典型的mybatis核心配置文件：
+
+```xml
+<configuration>
+    <settings>
+        <setting name="logImpl" value="LOG4J"/>
+    </settings>
+    
+    <environments default="development">
+        <environment id="development">
+            <transactionManager type="JDBC"/>
+            <dataSource type="POOLED">
+                <property name="driver" value="com.mysql.cj.jdbc.Driver"/>
+                <property name="url" 		      value="jdbc:mysql://127.0.0.1:3306/testuseUnicode=true&characterEncoding=utf-8"/>
+                <property name="username" value="root"/>
+                <property name="password" value="root"/>
+            </dataSource>
+        </environment>
+    </environments>
+
+    <mappers>
+        <mapper resource="mapper/userMapper.xml"/>
+    </mappers>
+</configuration>
+```
+
+一段典型的mybatis的代码：
+
+```java
+				//1. 加载配置文件
+        String resource = "mybatis-config.xml";
+        InputStream inputStream = Resources.getResourceAsStream(resource);
+        //2. 通过SqlSessionFactoryBuilder构建SqlSessionFactory
+        SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+        //3. 通过sqlSessionFactory获取SqlSession
+        SqlSession sqlSession = sqlSessionFactory.openSession(true);
+        //4. 获取Mapper接口的代理对象
+        UserMapper mapper = sqlSession.getMapper(UserMapper.class);
+        //5. 通过代理对象调用方法
+        System.out.println(mapper.queryAll());
+```
+
+### 源码分析
+
+1. 从**sqlSession.getMapper(UserMapper.class)**说起，实际返回的是一个代理对象：
+
+```java
+public <T> T getMapper(Class<T> type, SqlSession sqlSession) {
+    final MapperProxyFactory<T> mapperProxyFactory = (MapperProxyFactory<T>) knownMappers.get(type);
+    if (mapperProxyFactory == null) {
+      throw new BindingException("Type " + type + " is not known to the MapperRegistry.");
+    }
+    try {
+      //生成代理对象
+      return mapperProxyFactory.newInstance(sqlSession);
+    } catch (Exception e) {
+      throw new BindingException("Error getting mapper instance. Cause: " + e, e);
+    }
+  } 
+```
+
+2. **mapperProxyFactory.newInstance(sqlSession)**中的方法，通过JDK动态代理生成了代理对象。
+
+```java
+public class MapperProxyFactory<T> {
+
+  private final Class<T> mapperInterface;
+
+  @SuppressWarnings("unchecked")
+  protected T newInstance(MapperProxy<T> mapperProxy) {
+    return (T) Proxy.newProxyInstance(mapperInterface.getClassLoader(), new Class[] { mapperInterface }, mapperProxy);
+  }
+```
+
+3. MapperProxy是自定义的Handler，其会在invoke()方法中执行映射文件中的sql语句。
+
 
 ```Java
 public class MapperProxy<T> implements InvocationHandler, Serializable {
@@ -72,19 +147,4 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
   }
   // ...
 ```
-
-org.apache.ibatis.binding.MapperProxyFactory.java部分源码。
-
-```Java
-public class MapperProxyFactory<T> {
-
-  private final Class<T> mapperInterface;
-
-  @SuppressWarnings("unchecked")
-  protected T newInstance(MapperProxy<T> mapperProxy) {
-    return (T) Proxy.newProxyInstance(mapperInterface.getClassLoader(), new Class[] { mapperInterface }, mapperProxy);
-  }
-```
-
-
 

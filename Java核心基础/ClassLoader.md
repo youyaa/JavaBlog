@@ -71,6 +71,68 @@ JVM内置了三个重要的 ClassLoader，除BootStrapClassLoader外，其他类
 
    面向用户的加载器，负载加载当前ClassPath下的所有jar和类。
 
+
+
+### AppClassLoader
+
+```java
+static class AppClassLoader extends URLClassLoader {
+        final URLClassPath ucp = SharedSecrets.getJavaNetAccess().getURLClassPath(this);
+
+        public static ClassLoader getAppClassLoader(final ClassLoader var0) throws IOException {
+            final String var1 = System.getProperty("java.class.path");
+            final File[] var2 = var1 == null ? new File[0] : Launcher.getClassPath(var1);
+            return (ClassLoader)AccessController.doPrivileged(new PrivilegedAction<Launcher.AppClassLoader>() {
+                public Launcher.AppClassLoader run() {
+                    URL[] var1x = var1 == null ? new URL[0] : Launcher.pathToURLs(var2);
+                    return new Launcher.AppClassLoader(var1x, var0);
+                }
+            });
+        }
+}
+```
+
+从源码可以看到AppClassLoader从系统参数读取了java.class.path属性，各种ide都为程序指定了这个参数。可用jcmd命令查看：
+
+![jcmd](img/jcmd查看系统参数.png)
+
+### 类加载过程
+
+在前面介绍类加载器的代理模式的时候，提到过类加载器会首先代理给其它类加载器来尝试加载某个类。这就意味着真正完成类的加载工作的类加载器和启动这个加载过程的类加载器，有可能不是同一个。真正完成类的加载工作是通过调用 `defineClass`来实现的；而启动类的加载过程是通过调用 `loadClass`来实现的。前者称为一个类的定义加载器（defining loader），后者称为初始加载器（initiating loader）。在 Java 虚拟机判断两个类是否相同的时候，使用的是类的定义加载器。也就是说，哪个类加载器启动类的加载过程并不重要，重要的是最终定义这个类的加载器。两种类加载器的关联之处在于：一个类的定义加载器是它引用的其它类的初始加载器。如类 `com.example.Outer`引用了类 `com.example.Inner`，则由类 `com.example.Outer`的定义加载器负责启动类 `com.example.Inner`的加载过程。
+
+方法 `loadClass()`抛出的是 `java.lang.ClassNotFoundException`异常；方法 `defineClass()`抛出的是 `java.lang.NoClassDefFoundError`异常。
+
+类加载器在成功加载某个类之后，会把得到的 `java.lang.Class`类的实例缓存起来。下次再请求加载该类的时候，类加载器会直接使用缓存的类的实例，而不会尝试再次加载。也就是说，对于一个类加载器实例来说，相同全名的类只加载一次，即 `loadClass`方法不会被重复调用。
+
+### 加载器:类不会重复加载
+
+ 类的唯一性：同一个类加载器，类的全限定名一样，代表同一个类。
+
+使用同一个类加载器，对同一个class的不同版本进行加载，不能加载到最新的class文件，即不支持热加载。
+
+```java
+public class classLoader {
+    public static void main(String[] args) throws Exception{
+        String path = "file:/Users/jingxintingyu/Desktop/";
+        /**
+         * 同一个类加载器不会重复加载类，只会加载一次，运行期间改变了class文件也不会更新，即不支持热更新。
+         * 要实现热更新，只能每次新建一个类加载器。Tomcat加载jsp文件就是利用类似的机制，检测到jsp更新后，用新的加载器
+         * 去加载，以支持热更新。
+         */
+        while (true){
+            //每次都新建一个加载器，就能读取到最新的class文件，支持了热更新，Tomcat动态加载jsp文件就是这个原理
+            URLClassLoader urlClassLoader = new URLClassLoader(new URL[]{new URL(path)});
+            Class<?> tttt = urlClassLoader.loadClass("TTTT");
+            Object o = tttt.newInstance();
+            tttt.getMethod("test").invoke(o);
+            TimeUnit.SECONDS.sleep(2);
+        }
+    }
+}
+```
+
+
+
  ### 双亲委派模型
 
 JVM通过双亲委派模型进行类的加载。不想使用双亲委派模型，则可以自定义类加载器，通过继承 java.lang.ClassLoader实现自定义的类加载器。
@@ -82,3 +144,55 @@ JVM通过双亲委派模型进行类的加载。不想使用双亲委派模型�
 采用双亲委派的一个好处是比如加载位于 rt.jar 包中的类 java.lang.Object，不管是哪个加载器加载这个类，最终都是委托给顶层的启动类加载器进行加载，这样就保证了使用不同的类加载器最终得到的都是同样一个 Object 对象。
 
 > JVM区分不同类的方式是 类加载器+类的全限定名，相同类被不同加载器加载后得到的是两个不同的类。
+
+### 自定义类加载器
+
+一个标准的自定义类加载器的实现如下：
+
+```java
+public class FileSystemClassLoader extends ClassLoader { 
+ 
+   private String rootDir; 
+ 
+   public FileSystemClassLoader(String rootDir) { 
+       this.rootDir = rootDir; 
+   } 
+   protected Class<?> findClass(String name) throws ClassNotFoundException {
+       //找到对象的字节码
+       byte[] classData = getClassData(name); 
+       if (classData == null) { 
+           throw new ClassNotFoundException(); 
+       } 
+       else { 
+           //defineClass方法将字节码转化为类
+           return defineClass(name, classData, 0, classData.length); 
+       } 
+   } 
+   private byte[] getClassData(String className) { 
+       String path = classNameToPath(className); 
+       try { 
+           InputStream ins = new FileInputStream(path); 
+           ByteArrayOutputStream baos = new ByteArrayOutputStream(); 
+           int bufferSize = 4096; 
+           byte[] buffer = new byte[bufferSize]; 
+           int bytesNumRead = 0; 
+           while ((bytesNumRead = ins.read(buffer)) != -1) { 
+               baos.write(buffer, 0, bytesNumRead); 
+           } 
+           return baos.toByteArray(); 
+       } catch (IOException e) { 
+           e.printStackTrace(); 
+       } 
+       return null; 
+   } 
+   private String classNameToPath(String className) { 
+       return rootDir + File.separatorChar 
+               + className.replace('.', File.separatorChar) + ".class"; 
+   } 
+}
+```
+
+继承了ClassLoader类，并重写了findClass()方法。
+
+为了维护类加载器的双亲委派模型，官方不建议直接重写loadClass()方法，而是重写findClass()方法，因为委派模型是在loadClasss中实现的，而在父类加载器无法加载时，会调用findClasss()来查找该类。
+
