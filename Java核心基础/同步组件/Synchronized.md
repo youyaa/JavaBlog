@@ -38,7 +38,7 @@
 
 在其余标记情况下：
 
-![MarkWord](img/MarkWord.png)
+![MarkWord](../img/MarkWord.png)
 
 当线程获取到一个对象的重量级锁之后，锁的标识位是10，其指针就指向Monitor对象。每个对象都存在着一个 monitor 与之关联，当一个 monitor 被某个线程持有后，它便处于锁定状态。
 

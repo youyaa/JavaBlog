@@ -157,7 +157,7 @@ HashMap，是一种根据关键码值（Key）去访问的value一种数据结�
 
 2. SHA(Secure Hash Algorithm，安全散列算法)算法：常见的有SHA-224、SHA-256、SHA-384，和 SHA-512 算法（统称为 SHA-2 算法）
 3. 国内的 SM3 算法。
-4. MurmurHash
+4. MurmurHash。
 
 ### JDK中String类使用的Hash算法
 

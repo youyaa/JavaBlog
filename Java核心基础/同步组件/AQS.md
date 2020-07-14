@@ -50,9 +50,9 @@ AQS定义两种资源共享方式：
 
 ### CLH虚拟同步队列
 
-AQS内部维护着一个FIFO队列，该队列就是CLH同步队列，遵循FIFO原则（ First Input First Output先进先出）。CLH同步队列是一个FIFO双向队列，AQS依赖它来完成同步状态的管理。（虚拟队列不包含head节点）
+AQS内部维护着一个FIFO队列，该队列就是CLH同步队列，遵循FIFO原则（ First Input First Output先进先出）。CLH同步队列是一个FIFO双向队列，AQS依赖它来完成同步状态的管理。（虚拟队列不包含head节点，head节点是获取到锁正在执行的线程）
 
-![CLH](img/CLH虚拟队列.png)
+![CLH](../img/CLH虚拟队列.png)
 
 当前线程如果获取同步状态失败时，AQS则会将当前线程已经等待状态等信息构造成一个节点（Node）并将其加入到CLH同步队列，同时会阻塞当前线程，当同步状态释放时，会把首节点唤醒（公平锁），使其再次尝试获取同步状态。
 
@@ -60,7 +60,7 @@ AQS内部维护着一个FIFO队列，该队列就是CLH同步队列，遵循FIFO
 
 CLH队列入列非常简单，就是tail指向新节点、新节点的prev指向当前最后的节点，当前最后一个节点的next指向当前节点。
 
-![CLH入队](img/CLH入队.png)
+![CLH入队](../img/CLH入队.png)
 
 ```java
 private Node addWaiter(Node mode) {
@@ -102,7 +102,7 @@ private Node enq(final Node node) {
 
 CLH同步队列遵循FIFO，首节点的线程释放同步状态后，将会唤醒它的后继节点（next），而后继节点将会在获取同步状态成功时将自己设置为首节点。head执行该节点并断开原首节点的next和当前节点的prev即可，注意在这个过程是不需要使用CAS来保证的，因为只有一个线程能够成功获取到同步状态。
 
-![CLH出队](img/CLH出队.png)
+![CLH出队](../img/CLH出队.png)
 
 ## JUC中Condition
 
@@ -117,7 +117,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
 
 每个Condition对象都包含着一个**FIFO队列**，该队列是Condition对象通知/等待功能的关键。在队列中每一个节点都包含着一个线程引用，该线程就是在该Condition对象上等待的线程。
 
-![阻塞队列和条件队列](img/阻塞队列和条件队列.png)
+![阻塞队列和条件队列](../img/阻塞队列和条件队列.png)
 
 ```java
 public class ConditionObject implements Condition, java.io.Serializable {
@@ -137,7 +137,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
 
 Condition有首尾指针，当前线程调用await()方法时，即以当前线程构建的一个节点（Node），并加到队列的尾部。
 
-![Condition等待队列](img/Condition-等待队列.png)
+![Condition等待队列](../img/Condition-等待队列.png)
 
 Node里面包含了当前线程的引用。Node定义与AQS的CLH同步队列的节点使用的都是同一个类（AbstractQueuedSynchronized.Node静态内部类）。
 

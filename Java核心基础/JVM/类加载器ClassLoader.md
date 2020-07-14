@@ -2,7 +2,7 @@
 
 类加载，即将一个.Class文件加载进内存的过程。分为以下步骤：
 
-![类加载](img/类加载过程.png)
+<img src="../img/类加载过程.png" alt="类加载" style="zoom:50%;" />
 
 ### 加载
 
@@ -24,7 +24,7 @@ Java虚拟机规范并没有具体说明，获取类的二进制字节流并没�
 
 #### 验证
 
-![验证](img/class验证.png)
+<img src="../img/class验证.png" alt="验证" style="zoom: 67%;" />
 
 #### 准备
 
@@ -94,7 +94,7 @@ static class AppClassLoader extends URLClassLoader {
 
 从源码可以看到AppClassLoader从系统参数读取了java.class.path属性，各种ide都为程序指定了这个参数。可用jcmd命令查看：
 
-![jcmd](img/jcmd查看系统参数.png)
+<img src="../img/jcmd查看系统参数.png" style="zoom:50%;" />
 
 ### 类加载过程
 
@@ -137,7 +137,7 @@ public class classLoader {
 
 JVM通过双亲委派模型进行类的加载。不想使用双亲委派模型，则可以自定义类加载器，通过继承 java.lang.ClassLoader实现自定义的类加载器。
 
-![双亲委派](img/双亲委派模型.png)
+<img src="../img/双亲委派模型.png" style="zoom:50%;" />
 
 当一个类收到了类加载请求，他首先不会尝试自己去加载这个类，而是把这个请求委派给父类去完成，每一个层次类加载器都是如此，因此所有的加载请求都应该传送到启动类加载其中，只有当父类加载器反馈自己无法完成这个请求的时候(在它的加载路径下没有找到所需加载的Class)，子类加载器才会尝试自己去加载。
 

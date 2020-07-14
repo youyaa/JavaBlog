@@ -1,7 +1,5 @@
 > 线程本地存储，即为每个线程单独分配一个内存，不同享。
 
-
-
 ### Thread类结构分析
 
 在ThreadLocal类中有一个内部类ThreadLocalMap，

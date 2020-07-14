@@ -116,7 +116,7 @@ class VolatileExample {
 }
 ```
 
-![传递规则](img/Happens-before传递规则.png)
+<img src="../img/Happens-before传递规则.png" alt="传递规则" style="zoom:50%;" />
 
 1. “x=42” Happens-Before 写变量 “v=true” ，这是规则 1 的内容；
 
