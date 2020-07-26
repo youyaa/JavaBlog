@@ -60,7 +60,7 @@ AQS内部维护着一个FIFO队列，该队列就是CLH同步队列，遵循FIFO
 
 CLH队列入列非常简单，就是tail指向新节点、新节点的prev指向当前最后的节点，当前最后一个节点的next指向当前节点。
 
-![CLH入队](../img/CLH入队.png)
+![CLH入队](/Applications/program/common/java-blog/listeningrain/img/CLH队列.png)
 
 ```java
 private Node addWaiter(Node mode) {

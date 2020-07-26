@@ -126,7 +126,7 @@ ZooKeeper 的数据模型，在结构上和标准文件系统的非常相似，�
 
 **ephemeralOwner**:  如果该节点为临时节点, ephemeralOwner 值表示与该节点 绑定的 session id. 如果不是, ephemeralOwner 值为 0。
 
-在 client 和 server 通信之前,首先需要建立连接,该连接称为 session。连 接建立后,如果发生连接超时、授权失败,或者显式关闭连接,连接便处于 CLOSED 状态, 此时 session 结束。
+在 client 和 server 通信之前,首先需要建立连接,该连接称为 session。连接建立后,如果发生连接超时、授权失败,或者显式关闭连接,连接便处于 CLOSED 状态, 此时 session 结束。
 
 ## Zookeeper Watcher(监听)机制
 
